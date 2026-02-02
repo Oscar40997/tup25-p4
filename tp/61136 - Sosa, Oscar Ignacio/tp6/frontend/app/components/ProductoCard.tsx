@@ -17,8 +17,7 @@ export default function ProductoCard({ producto }: ProductoCardProps) {
           // Construimos la URL dinámica según el ID del producto
           src={`${API_URL}/imagenes/${producto.id.toString().padStart(4, '0')}.png`}
           alt={producto.titulo}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          width={200} height={150}
           className="object-contain p-4"
           unoptimized // Para cargar imágenes externas sin optimización de Next.js
         />
