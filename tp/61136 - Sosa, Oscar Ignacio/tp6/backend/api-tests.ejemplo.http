@@ -1,0 +1,82 @@
+### API de E-Commerce - Tests HTTP Client
+
+@api_url = http://localhost:8000
+
+### 1. Verificar que la API está funcionando
+GET {{api_url}}/
+
+### 2. Obtener lista de productos
+GET {{api_url}}/productos
+
+### 3. Obtener un producto específico
+GET {{api_url}}/productos/1
+
+### 4. Obtener estado actual del carrito
+GET {{api_url}}/carrito
+
+### 5. Agregar producto al carrito
+POST {{api_url}}/carrito/agregar
+Content-Type: application/json
+
+{
+  "producto_id": 1,
+  "cantidad": 2,
+  "titulo": "Mochila Fjallraven Foldsack",
+  "precio": 109.95,
+  "imagen": "imagenes/0001.png"
+}
+
+### 6. Agregar otro producto al carrito
+POST {{api_url}}/carrito/agregar
+Content-Type: application/json
+
+{
+  "producto_id": 2,
+  "cantidad": 1,
+  "titulo": "Camiseta ajustada premium",
+  "precio": 22.3,
+  "imagen": "imagenes/0002.png"
+}
+
+### 7. Ver carrito actualizado
+GET {{api_url}}/carrito
+
+### 8. Actualizar cantidad de un producto
+PUT {{api_url}}/carrito/actualizar/1?cantidad=3
+
+### 9. Eliminar producto del carrito
+POST {{api_url}}/carrito/eliminar/2
+
+### 10. Ver carrito después de eliminar
+GET {{api_url}}/carrito
+
+### 11. Crear un pedido
+POST {{api_url}}/pedidos/crear
+Content-Type: application/json
+
+{
+  "cliente_nombre": "Juan Pérez",
+  "cliente_email": "juan@example.com",
+  "cliente_telefono": "555-1234",
+  "cliente_direccion": "Calle Principal 123",
+  "cliente_ciudad": "Buenos Aires",
+  "items": [
+    {
+      "producto_id": 1,
+      "cantidad": 3,
+      "titulo": "Mochila Fjallraven Foldsack",
+      "precio": 109.95,
+      "imagen": "imagenes/0001.png"
+    }
+  ],
+  "total": 329.85
+}
+
+### 12. Ver carrito después de crear pedido (debe estar vacío)
+GET {{api_url}}/carrito
+
+### 13. Acceder a una imagen de producto
+GET {{api_url}}/imagenes/0001.png
+
+### 14. Ver documentación interactiva (Swagger)
+GET {{api_url}}/docs
