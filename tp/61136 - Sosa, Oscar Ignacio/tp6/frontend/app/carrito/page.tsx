@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCarrito } from '../context/CarritoContext';
+import { useAuth } from '../context/AuthContext';
 import Image from 'next/image';
 import { eliminarDelCarrito, actualizarCantidad, crearPedido } from '../services/carrito';
 import { useRouter } from 'next/navigation';
 
 export default function CarritoPage() {
   const { carrito, refrescar } = useCarrito();
+  const { usuario, token, loading } = useAuth();
   const router = useRouter();
   const [cargando, setCargando] = useState(false);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -19,12 +21,27 @@ export default function CarritoPage() {
     cliente_direccion: '',
     cliente_ciudad: '',
   });
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+  useEffect(() => {
+    if (!loading && usuario) {
+      setFormData((prev) => ({
+        ...prev,
+        cliente_nombre: usuario.nombre,
+        cliente_email: usuario.email,
+        cliente_telefono: usuario.telefono,
+        cliente_direccion: usuario.direccion,
+        cliente_ciudad: usuario.ciudad,
+      }));
+    }
+  }, [usuario, loading]);
 
   const handleEliminar = async (productoId: number) => {
+    if (!token) return;
     setCargando(true);
     try {
-      await eliminarDelCarrito(productoId);
-      await refrescar();
+      await eliminarDelCarrito(productoId, token);
+      await refrescar(token);
     } catch (error) {
       console.error('Error al eliminar:', error);
       alert('Error al eliminar del carrito');
@@ -34,11 +51,11 @@ export default function CarritoPage() {
   };
 
   const handleActualizarCantidad = async (productoId: number, cantidad: number) => {
-    if (cantidad < 1) return;
+    if (cantidad < 1 || !token) return;
     setCargando(true);
     try {
-      await actualizarCantidad(productoId, cantidad);
-      await refrescar();
+      await actualizarCantidad(productoId, cantidad, token);
+      await refrescar(token);
     } catch (error) {
       console.error('Error al actualizar:', error);
     } finally {
@@ -53,6 +70,10 @@ export default function CarritoPage() {
 
   const handleComprar = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!token) {
+      router.push('/login');
+      return;
+    }
     setCargando(true);
     try {
       const pedido = {
@@ -61,7 +82,7 @@ export default function CarritoPage() {
         total: carrito.total,
       };
 
-      const resultado = await crearPedido(pedido);
+      const resultado = await crearPedido(pedido, token);
       alert(
         `¡Pedido creado exitosamente!\nID del pedido: ${resultado.pedido_id}\nTotal: $${resultado.total.toFixed(2)}`
       );
@@ -73,8 +94,8 @@ export default function CarritoPage() {
         cliente_ciudad: '',
       });
       setMostrarFormulario(false);
-      await refrescar();
-      router.push('/');
+      await refrescar(token);
+      router.push('/pedidos');
     } catch (error) {
       console.error('Error al crear pedido:', error);
       alert('Error al crear el pedido');
@@ -83,7 +104,38 @@ export default function CarritoPage() {
     }
   };
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500 text-lg">Cargando...</p>
+      </div>
+    );
+  }
+
+  if (!usuario) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Debes iniciar sesión</h1>
+          <p className="text-gray-600 mb-6">Para completar tu compra, necesitas tener una cuenta</p>
+          <div className="flex gap-4 justify-center">
+            <Link
+              href="/login"
+              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+            >
+              Iniciar Sesión
+            </Link>
+            <Link
+              href="/registro"
+              className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
+            >
+              Registrarse
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">

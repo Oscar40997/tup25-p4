@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 import "./globals.css";
 import { CarritoProvider } from "./context/CarritoContext";
+import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
 
 const roboto = Roboto({
@@ -11,8 +12,8 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "E-Commerce",
-  description: "Sitio de comercio electrónico con Next.js y FastAPI",
+  title: "ShopHub - Tienda Online",
+  description: "Compra los mejores productos en línea",
 };
 
 export default function RootLayout({
@@ -23,10 +24,12 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${roboto.variable} antialiased bg-gray-50`}>
-        <CarritoProvider>
-          <Navbar />
-          {children}
-        </CarritoProvider>
+        <AuthProvider>
+          <CarritoProvider>
+            <Navbar />
+            {children}
+          </CarritoProvider>
+        </AuthProvider>
       </body>
     </html>
   );

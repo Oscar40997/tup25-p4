@@ -13,9 +13,13 @@ export interface Carrito {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-export async function obtenerCarrito(): Promise<Carrito> {
+export async function obtenerCarrito(token: string): Promise<Carrito> {
   try {
-    const response = await fetch(`${API_URL}/carrito`);
+    const response = await fetch(`${API_URL}/carrito`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
     if (!response.ok) {
       throw new Error('Error al obtener carrito');
     }
@@ -26,12 +30,13 @@ export async function obtenerCarrito(): Promise<Carrito> {
   }
 }
 
-export async function agregarAlCarrito(item: CarritoItem): Promise<Carrito> {
+export async function agregarAlCarrito(item: CarritoItem, token: string): Promise<Carrito> {
   try {
     const response = await fetch(`${API_URL}/carrito/agregar`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(item),
     });
@@ -46,10 +51,13 @@ export async function agregarAlCarrito(item: CarritoItem): Promise<Carrito> {
   }
 }
 
-export async function eliminarDelCarrito(productoId: number): Promise<Carrito> {
+export async function eliminarDelCarrito(productoId: number, token: string): Promise<Carrito> {
   try {
     const response = await fetch(`${API_URL}/carrito/eliminar/${productoId}`, {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
     });
     if (!response.ok) {
       throw new Error('Error al eliminar del carrito');
@@ -64,13 +72,17 @@ export async function eliminarDelCarrito(productoId: number): Promise<Carrito> {
 
 export async function actualizarCantidad(
   productoId: number,
-  cantidad: number
+  cantidad: number,
+  token: string
 ): Promise<Carrito> {
   try {
     const response = await fetch(
       `${API_URL}/carrito/actualizar/${productoId}?cantidad=${cantidad}`,
       {
         method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       }
     );
     if (!response.ok) {
@@ -84,10 +96,13 @@ export async function actualizarCantidad(
   }
 }
 
-export async function vaciarCarrito(): Promise<Carrito> {
+export async function vaciarCarrito(token: string): Promise<Carrito> {
   try {
     const response = await fetch(`${API_URL}/carrito/vaciar`, {
       method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
     });
     if (!response.ok) {
       throw new Error('Error al vaciar carrito');
@@ -110,12 +125,13 @@ export interface PedidoData {
   total: number;
 }
 
-export async function crearPedido(pedido: PedidoData) {
+export async function crearPedido(pedido: PedidoData, token: string) {
   try {
     const response = await fetch(`${API_URL}/pedidos/crear`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(pedido),
     });

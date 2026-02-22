@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { agregarAlCarrito } from '../services/carrito';
 import { useCarrito } from '../context/CarritoContext';
+import { useAuth } from '../context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 interface ProductoCardProps {
   producto: Producto;
@@ -15,18 +17,28 @@ export default function ProductoCard({ producto }: ProductoCardProps) {
   const [cantidad, setCantidad] = useState(1);
   const [cargando, setCargando] = useState(false);
   const { refrescar } = useCarrito();
+  const { token, usuario } = useAuth();
+  const router = useRouter();
 
   const handleAgregarAlCarrito = async () => {
+    if (!token || !usuario) {
+      router.push('/login');
+      return;
+    }
+
     setCargando(true);
     try {
-      await agregarAlCarrito({
-        producto_id: producto.id,
-        cantidad: cantidad,
-        titulo: producto.titulo,
-        precio: producto.precio,
-        imagen: producto.imagen,
-      });
-      refrescar();
+      await agregarAlCarrito(
+        {
+          producto_id: producto.id,
+          cantidad: cantidad,
+          titulo: producto.titulo,
+          precio: producto.precio,
+          imagen: producto.imagen,
+        },
+        token
+      );
+      refrescar(token);
       setCantidad(1);
       alert(`${cantidad} unidad(es) de ${producto.titulo} agregada al carrito`);
     } catch (error) {
