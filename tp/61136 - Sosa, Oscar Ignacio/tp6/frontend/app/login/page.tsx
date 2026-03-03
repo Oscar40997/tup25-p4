@@ -31,61 +31,62 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">Iniciar Sesión</h1>
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Iniciarsesión</h1>
+          <p className="text-sm text-gray-500 bg-gray-600 text-white inline-block px-4 py-1 rounded">
+            Pantalla de inicio de sesión
+          </p>
+        </div>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
+        <div className="bg-white rounded-lg border border-gray-200 p-8 shadow-sm">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 text-sm">
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded hover:border-gray-400 focus:outline-none focus:border-blue-500"
-              placeholder="tu@email.com"
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="form-group">
+              <label className="form-label">Correo</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-0"
+                placeholder="tu@email.com"
+              />
+            </div>
 
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">Contraseña</label>
-            <input
-              type="password"
-              value={contraseña}
-              onChange={(e) => setContraseña(e.target.value)}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded hover:border-gray-400 focus:outline-none focus:border-blue-500"
-              placeholder="••••••••"
-            />
-          </div>
+            <div className="form-group">
+              <label className="form-label">Contraseña</label>
+              <input
+                type="password"
+                value={contraseña}
+                onChange={(e) => setContraseña(e.target.value)}
+                required
+                className="w-full px-4 py-3 border-2 border-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="••••••••"
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={cargando}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors disabled:opacity-50"
-          >
-            {cargando ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={cargando}
+              className="w-full bg-blue-900 hover:bg-blue-950 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {cargando ? 'Entrando...' : 'Entrar'}
+            </button>
+          </form>
 
-        <p className="text-center text-gray-700 mt-6">
-          ¿No tienes cuenta?{' '}
-          <Link href="/registro" className="text-blue-600 hover:text-blue-700 font-medium">
-            Regístrate aquí
-          </Link>
-        </p>
-
-        <div className="mt-6 p-4 bg-blue-50 rounded border border-blue-200">
-          <p className="text-sm text-gray-600 font-medium mb-2">Usuarios de prueba:</p>
-          <p className="text-sm text-gray-600">Email: juan@example.com</p>
-          <p className="text-sm text-gray-600">Contraseña: password123</p>
+          <p className="text-center text-gray-600 mt-6 text-sm">
+            ¿No tienes cuenta?{' '}
+            <Link href="/registro" className="text-blue-600 hover:text-blue-700 font-medium">
+              Registrate
+            </Link>
+          </p>
         </div>
       </div>
     </div>

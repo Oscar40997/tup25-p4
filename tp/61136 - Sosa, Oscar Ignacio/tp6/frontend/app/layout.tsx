@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
-import { Roboto } from "next/font/google";
 import "./globals.css";
 import { CarritoProvider } from "./context/CarritoContext";
 import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
 
-const roboto = Roboto({
-  weight: ["400", "500", "700"],
-  variable: "--font-roboto",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "ShopHub - Tienda Online",
+  title: "TP6 Shop - Tienda Online",
   description: "Compra los mejores productos en línea",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -23,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${roboto.variable} antialiased bg-gray-50`}>
+      <body style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}>
         <AuthProvider>
           <CarritoProvider>
             <Navbar />

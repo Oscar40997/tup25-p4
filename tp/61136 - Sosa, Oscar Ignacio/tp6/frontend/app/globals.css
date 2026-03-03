@@ -1,9 +1,79 @@
 @import "tailwindcss";
 
-body {
-  @apply bg-gray-50 text-gray-900;
+:root {
+  --primary: #1a3a52;
+  --primary-light: #2d5a7a;
+  --accent: #4a90e2;
+  --border: #d1d5db;
+  --bg-light: #f9fafb;
+  --text-dark: #1f2937;
+  --text-muted: #6b7280;
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-white text-gray-900;
+}
+
+/* Inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+textarea,
+select {
+  @apply border border-gray-300 rounded-lg px-4 py-3 transition-all duration-200;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="tel"]:focus,
+textarea:focus,
+select:focus {
+  @apply outline-none ring-2 ring-blue-500 border-blue-500;
+}
+
+/* Botones */
+button {
+  @apply transition-all duration-200;
+}
+
+.btn-primary {
+  @apply bg-blue-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-950 active:scale-95;
+}
+
+.btn-secondary {
+  @apply bg-gray-200 text-gray-900 px-6 py-3 rounded-lg font-medium hover:bg-gray-300;
+}
+
+.btn-success {
+  @apply bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700;
+}
+
+/* Cards */
+.card {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200;
+  transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+  @apply shadow-md;
+}
+
+/* Formularios */
+.form-group {
+  @apply mb-4;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+/* Links */
+a {
+  @apply text-blue-600 hover:text-blue-700 transition-colors;
 }
