@@ -815,3 +815,170 @@ Si quieres probar TODO de una vez, sigue este orden:
 7. **Paso 5.2**: Finalizar compra
 
 **Tiempo total:** ~2 minutos para completar el flujo completo.
+
+---
+
+## 📋 Flujo de Trabajo 6: Ver Historial de Compras
+
+Una vez que has completado una compra (Flujo 5), puedes revisar tu historial de compras anteriores.
+
+### Flujo 6.1: Ver resumen de todas las compras
+
+#### 6.1.1 - Listar todas las compras del usuario
+
+Busca esta sección en `api-tests.http`:
+```http
+### 6.1 - Ver resumen de todas las compras
+GET {{baseUrl}}/compras
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+```
+
+**Instrucciones:**
+1. Asegúrate de tener el `@token` guardado (del login anterior)
+2. Haz clic en **"Send Request"** o presiona `Ctrl+Alt+R`
+
+**Respuesta esperada:**
+```json
+[
+  {
+    "compra_id": 1,
+    "usuario_id": 1,
+    "estado": "completada",
+    "fecha": "2026-03-02T15:30:45.123456",
+    "direccion": "Av. Corrientes 1234, CABA",
+    "total": 25000,
+    "cantidad_items": 1
+  },
+  {
+    "compra_id": 2,
+    "usuario_id": 1,
+    "estado": "completada",
+    "fecha": "2026-03-02T16:15:20.654321",
+    "direccion": "Calle Falsa 123, Springfield",
+    "total": 115000,
+    "cantidad_items": 3
+  }
+]
+```
+
+✅ Verás una lista de todas las compras del usuario autenticado.
+
+**Información que ves:**
+- `compra_id`: ID único de cada compra (necesario para el paso 6.2)
+- `estado`: Siempre será "completada" (para compras finalizadas)
+- `fecha`: Cuándo se realizó la compra
+- `direccion`: Dónde se entregará
+- `total`: Monto total de la compra
+- `cantidad_items`: Cuántos productos tiene la compra
+
+---
+
+### Flujo 6.2: Ver detalle completo de una compra específica
+
+#### 6.2.1 - Obtener detalles de una compra
+
+Busca esta sección en `api-tests.http`:
+```http
+### 6.2 - Ver detalle de una compra específica
+GET {{baseUrl}}/compras/{{compra_id}}
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+```
+
+**Instrucciones:**
+1. Reemplaza `{{compra_id}}` con el ID de una compra del paso 6.1.1
+   - Ejemplo: reemplaza con `1` para obtener `GET {{baseUrl}}/compras/1`
+   - Otra opción: usa `{{compra_id}}` si ejecutaste el flujo 5 antes (se guarda automáticamente)
+
+2. Haz clic en **"Send Request"**
+
+**Respuesta esperada:**
+```json
+{
+  "compra_id": 1,
+  "usuario_id": 1,
+  "numero_compra": "ORD-001",
+  "estado": "completada",
+  "fecha": "2026-03-02T15:30:45.123456",
+  "direccion": "Av. Corrientes 1234, CABA",
+  "total": 25000,
+  "items": [
+    {
+      "producto_id": 5,
+      "titulo": "Tablet Samsung",
+      "cantidad": 1,
+      "precio_unitario": 25000,
+      "subtotal": 25000
+    }
+  ]
+}
+```
+
+✅ Verás los detalles completos de esa compra, incluida la lista de productos.
+
+**Información detallada:**
+- `numero_compra`: Número de referencia de la compra (para reclamos o seguimiento)
+- `items`: Array con todos los productos de esa compra
+- `precio_unitario`: Precio de cada producto
+- `subtotal`: Precio × cantidad de cada ítem
+
+---
+
+### ✅ Tabla Resumida Flujo 6
+
+| Paso | Petición | Sección | Resultado Esperado |
+|------|----------|---------|-------------------|
+| **Flujo 6.1** | Listar compras | 6.1 | Array de todas las compras del usuario |
+| **Flujo 6.2** | Ver detalle | 6.2 | Detalles completos + items de una compra |
+
+---
+
+### 💡 Consejos para ver historial
+
+1. **Si obtienes lista vacía en 6.1**:
+   - Significa que el usuario NO ha realizado compras
+   - Completa el Flujo 5 (finalizar compra) primero
+   - Luego ejecuta 6.1 nuevamente
+
+2. **Si obtienes error 404 en 6.2**:
+   - El ID de compra no existe
+   - Primero ejecuta 6.1 para ver cuáles son los IDs válidos
+   - Usa uno de esos IDs en la petición 6.2
+
+3. **Si obtienes error 401**:
+   - El token ha expirado
+   - Haz login de nuevo (petición 3.2) para obtener un token fresco
+   - Luego intenta de nuevo
+
+4. **Para ver múltiples compras**:
+   - Repite el Flujo 5 varias veces (finalizar compra con diferentes productos)
+   - Luego ejecuta 6.1 para verlas todas listadas
+   - Usa 6.2 para ver detalles de cada una
+
+5. **Orden recomendado para probar**:
+   - Si es la primera vez:
+     1. Completa Flujo 5 (agregar productos y finalizar compra)
+     2. Luego ejecuta Flujo 6.1 (debería ver 1 compra)
+     3. Ejecuta Flujo 6.2 con ese ID (verás los detalles)
+   
+   - Si ya tienes compras:
+     1. Ejecuta directamente 6.1 (verás todas tus compras)
+     2. Elige uno de los IDs y ejecuta 6.2
+
+---
+
+### 📋 Flujo Completo Incluyendo Historial
+
+Para probar así TODO desde cero hasta ver el historial:
+
+1. **Registrar usuario** (3.1) - Nuevo usuario
+2. **Iniciar sesión** (3.2) - Login
+3. **Listar productos** (2.1) - Ver qué hay disponible
+4. **Agregar al carrito** (3.1 y 3.2 del flujo carrito) - 2 productos
+5. **Ver carrito** (4.1) - Verificar contenido
+6. **Finalizar compra** (5.2) - Compra realizada
+7. **Ver todas las compras** (6.1) - Historial (debería mostrar 1 compra)
+8. **Ver detalle de compra** (6.2) - Detalles completos
+
+**Tiempo total:** ~3-4 minutos para todo incluyendo historial.
