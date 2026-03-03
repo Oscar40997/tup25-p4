@@ -229,3 +229,589 @@ El archivo está organizado en **8 secciones**:
 7. **Casos de Error** - Pruebas sin autenticación (3 pruebas)
 8. **Flujo Completo** - Prueba de punta a punta (8 pasos)
 
+---
+
+## 🚀 Flujo de Trabajo 1-2: Registro, Login y Navegación de Productos
+
+Este es el flujo específico que debes probar para completar los requisitos 1 y 2:
+
+### Paso 1: Ejecutar el servidor backend
+
+1. Abre PowerShell y navega a la carpeta del backend:
+   ```powershell
+   cd "ruta\al\proyecto\tp6\backend"
+   ```
+
+2. Ejecuta el servidor:
+   ```powershell
+   uv run uvicorn main:app --reload
+   ```
+
+3. Verifica que está corriendo en: **http://localhost:8000**
+   - Deberías ver: `{"mensaje": "API de Productos - use /productos para obtener el listado"}`
+
+### Paso 2: Abrir el archivo de pruebas en VSCode
+
+1. En VSCode, abre el archivo: `backend/api-tests.http`
+2. Verifica que tengas la extensión **REST Client** instalada
+
+### Paso 3: Ejecutar las pruebas en orden
+
+#### 3.1 - Verificar que la API está corriendo (2.1)
+
+Busca esta sección:
+```http
+### 1.1 - Verificar que la API está corriendo
+GET {{baseUrl}}/
+Accept: {{contentType}}
+```
+
+Haz clic en **"Send Request"** o presiona `Ctrl+Alt+R`
+
+**Respuesta esperada:**
+```json
+{
+  "mensaje": "API de Productos - use /productos para obtener el listado"
+}
+```
+
+✅ Si ves esto, la API está funcionando correctamente.
+
+---
+
+#### 3.2 - Registrar un nuevo usuario (Flujo 1 - Paso 1)
+
+Busca esta sección:
+```http
+### 3.1 - Registrar un nuevo usuario
+POST {{baseUrl}}/registrar
+Content-Type: {{contentType}}
+
+{
+  "nombre": "Juan Pérez",
+  "email": "juan.perez@example.com",
+  "password": "miPassword123"
+}
+```
+
+Haz clic en **"Send Request"**
+
+**Respuesta esperada:**
+```json
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "token_type": "bearer",
+  "usuario": {
+    "id": 1,
+    "nombre": "Juan Pérez",
+    "email": "juan.perez@example.com"
+  }
+}
+```
+
+✅ Si ves el token, el registro fue exitoso.
+
+---
+
+#### 3.3 - Iniciar sesión (Flujo 1 - Paso 2)
+
+Busca esta sección:
+```http
+### 3.2 - Iniciar sesión
+# @name login
+POST {{baseUrl}}/iniciar-sesion
+Content-Type: {{contentType}}
+
+{
+  "email": "juan.perez@example.com",
+  "password": "miPassword123"
+}
+```
+
+Haz clic en **"Send Request"**
+
+**Respuesta esperada:**
+```json
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "token_type": "bearer",
+  "usuario": {
+    "id": 1,
+    "nombre": "Juan Pérez",
+    "email": "juan.perez@example.com"
+  }
+}
+```
+
+✅ El token se guardará automáticamente en la variable `@token` para las próximas peticiones.
+
+---
+
+#### 3.4 - Listar todos los productos (Flujo 2 - Paso 1)
+
+Busca esta sección:
+```http
+### 2.1 - Listar todos los productos
+GET {{baseUrl}}/productos
+Accept: {{contentType}}
+```
+
+Haz clic en **"Send Request"**
+
+**Respuesta esperada:**
+```json
+[
+  {
+    "id": 1,
+    "titulo": "Laptop HP",
+    "precio": 45000,
+    "descripcion": "Laptop potente...",
+    "categoria": "electro",
+    "stock": 5,
+    "imagen": "0001.png"
+  },
+  {
+    "id": 2,
+    "titulo": "Mouse Logitech",
+    ...
+  }
+]
+```
+
+✅ Verás una lista de todos los productos disponibles.
+
+---
+
+#### 3.5 - Buscar productos por texto (Flujo 2 - Paso 2a)
+
+Busca esta sección:
+```http
+### 2.2 - Buscar productos por texto
+GET {{baseUrl}}/productos?buscar=camis
+Accept: {{contentType}}
+```
+
+Haz clic en **"Send Request"**
+
+**Respuesta esperada:**
+```json
+[
+  {
+    "id": 3,
+    "titulo": "Camisa Azul",
+    "precio": 1500,
+    "categoria": "ropa",
+    ...
+  }
+]
+```
+
+✅ Verás solo los productos que coinciden con tu búsqueda (en este caso "camis").
+
+---
+
+#### 3.6 - Filtrar productos por categoría (Flujo 2 - Paso 2b)
+
+Busca esta sección:
+```http
+### 2.3 - Filtrar productos por categoría
+GET {{baseUrl}}/productos?categoria=electro
+Accept: {{contentType}}
+```
+
+Haz clic en **"Send Request"**
+
+**Respuesta esperada:**
+```json
+[
+  {
+    "id": 1,
+    "titulo": "Laptop HP",
+    "categoria": "electro",
+    ...
+  },
+  {
+    "id": 2,
+    "titulo": "Monitor LG",
+    "categoria": "electro",
+    ...
+  }
+]
+```
+
+✅ Verás solo productos de la categoría "electro".
+
+---
+
+#### 3.7 - Combinar búsqueda y filtro (Flujo 2 - Paso 3)
+
+Busca esta sección:
+```http
+### 2.4 - Combinar búsqueda y filtro
+GET {{baseUrl}}/productos?categoria=ropa&buscar=hombre
+Accept: {{contentType}}
+```
+
+Haz clic en **"Send Request"**
+
+**Respuesta esperada:**
+```json
+[
+  {
+    "id": 8,
+    "titulo": "Pantalón Hombre",
+    "categoria": "ropa",
+    ...
+  }
+]
+```
+
+✅ Verás productos que coincidan con AMBOS criterios (categoría Y búsqueda).
+
+---
+
+### ✅ Flujo Completo Resumido
+
+| Paso | Petición | Sección | Resultado Esperado |
+|------|----------|---------|-------------------|
+| **Flujo 1.1** | Registrar usuario | 3.1 | Token + Usuario |
+| **Flujo 1.2** | Iniciar sesión | 3.2 | Token guardado automáticamente |
+| **Flujo 2.1** | Listar productos | 2.1 | Array de todos los productos |
+| **Flujo 2.2a** | Buscar por texto | 2.2 | Productos filtrados por búsqueda |
+| **Flujo 2.2b** | Filtrar por categoría | 2.3 | Productos de esa categoría |
+| **Flujo 2.3** | Búsqueda + Filtro | 2.4 | Productos que cumplen ambos criterios |
+
+---
+
+### 💡 Consejos Útiles
+
+1. **Si obtienes error 404**: Verifica que el servidor backend está corriendo en `http://localhost:8000`
+2. **Si obtienes error 422**: El JSON de la petición está mal formado. Verifica comillas y comas.
+3. **Si obtienes error 400**: El usuario ya existe. Cambia el email en la petición 3.1.
+4. **Para cambiar los valores de búsqueda**: 
+   - En petición 2.2, reemplaza `buscar=camis` por lo que quieras buscar
+   - En petición 2.3, reemplaza `categoria=electro` por otra categoría (ej: `ropa`, `hogar`, etc.)
+   - En petición 2.4, cambia ambos parámetros
+
+5. **Para probar múltiples usuarios**: Cambia el email de la petición 3.1 cada vez que registres otro usuario.
+
+6. **Ver el token que se guardó**: Después de hacer login (3.2), el token se mostará en la sección "Authorization" de las siguientes peticiones que requieren autenticación.
+
+---
+
+## 🛒 Flujo de Trabajo 3-5: Carrito, Revisión y Finalización de Compra
+
+Continúa con el mismo servidor backend y archivo `api-tests.http`. Para este flujo necesitas:
+- ✅ Un usuario registrado y autenticado (token guardado de las peticiones anteriores)
+- ✅ Conocer los IDs de los productos que quieres comprar
+
+### Flujo 3: Agregar productos al carrito
+
+#### 3.1 - Agregar un producto al carrito
+
+Busca esta sección:
+```http
+### 4.2 - Agregar producto al carrito
+POST {{baseUrl}}/carrito
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "producto_id": 1,
+  "cantidad": 2
+}
+```
+
+**Instrucciones:**
+1. Verifica que el `@token` esté guardado (debe estar disponible después del login en el paso anterior)
+2. Reemplaza `"producto_id": 1` con el ID del producto que viste en la búsqueda anterior
+3. Reemplaza `"cantidad": 2` con la cantidad que desees (ej: 1, 2, 3, etc.)
+4. Haz clic en **"Send Request"** o presiona `Ctrl+Alt+R`
+
+**Respuesta esperada:**
+```json
+{
+  "id": 1,
+  "producto_id": 1,
+  "titulo": "Laptop HP",
+  "precio": 45000,
+  "cantidad": 2,
+  "subtotal": 90000
+}
+```
+
+✅ El producto se agregó exitosamente al carrito.
+
+---
+
+#### 3.2 - Agregar otro producto al carrito
+
+Busca esta sección:
+```http
+### 4.3 - Agregar otro producto al carrito
+POST {{baseUrl}}/carrito
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "producto_id": 5,
+  "cantidad": 1
+}
+```
+
+**Instrucciones:**
+1. Reemplaza `"producto_id": 5` con otro ID de producto diferente
+2. Reemplaza `"cantidad": 1` con la cantidad deseada
+3. Haz clic en **"Send Request"**
+
+**Respuesta esperada:**
+```json
+{
+  "id": 2,
+  "producto_id": 5,
+  "titulo": "Tablet Samsung",
+  "precio": 25000,
+  "cantidad": 1,
+  "subtotal": 25000
+}
+```
+
+✅ Ahora tienes 2 productos en el carrito.
+
+---
+
+### Flujo 4: Revisar el carrito y eliminar productos
+
+#### 4.1 - Ver el contenido actual del carrito
+
+Busca esta sección:
+```http
+### 4.1 - Ver carrito actual (requiere autenticación)
+GET {{baseUrl}}/carrito
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+```
+
+**Instrucciones:**
+1. Haz clic en **"Send Request"**
+
+**Respuesta esperada:**
+```json
+{
+  "usuario_id": 1,
+  "items": [
+    {
+      "id": 1,
+      "producto_id": 1,
+      "titulo": "Laptop HP",
+      "precio": 45000,
+      "cantidad": 2,
+      "subtotal": 90000
+    },
+    {
+      "id": 2,
+      "producto_id": 5,
+      "titulo": "Tablet Samsung",
+      "precio": 25000,
+      "cantidad": 1,
+      "subtotal": 25000
+    }
+  ],
+  "total": 115000
+}
+```
+
+✅ Verás todos los productos en el carrito con el total.
+
+---
+
+#### 4.2 - Eliminar un producto del carrito (opcional)
+
+Busca esta sección:
+```http
+### 4.4 - Quitar producto del carrito
+DELETE {{baseUrl}}/carrito/1
+Authorization: Bearer {{token}}
+```
+
+**Instrucciones:**
+1. Reemplaza el `1` en la URL con el `id` del producto que quieras eliminar (del paso 4.1)
+2. Haz clic en **"Send Request"**
+
+**Respuesta esperada:**
+```json
+{
+  "mensaje": "Producto eliminado del carrito"
+}
+```
+
+✅ El producto ha sido eliminado.
+
+---
+
+#### 4.3 - Verificar que el producto fue eliminado
+
+Vuelve a ejecutar la petición 4.1 (Ver carrito):
+```http
+### 4.1 - Ver carrito actual
+GET {{baseUrl}}/carrito
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+```
+
+**Respuesta esperada:**
+```json
+{
+  "usuario_id": 1,
+  "items": [
+    {
+      "id": 2,
+      "producto_id": 5,
+      "titulo": "Tablet Samsung",
+      "precio": 25000,
+      "cantidad": 1,
+      "subtotal": 25000
+    }
+  ],
+  "total": 25000
+}
+```
+
+✅ Verás que el primer producto fue eliminado y el total se actualizó.
+
+---
+
+### Flujo 5: Finalizar la compra
+
+#### 5.1 - Asegúrate de tener productos en el carrito
+
+Antes de finalizar, verifica que haya al menos un producto en el carrito (ejecuta nuevamente 4.1 si es necesario).
+
+Si el carrito está vacío, agrega más productos ejecutando 3.1 o 3.2.
+
+---
+
+#### 5.2 - Finalizar compra con dirección y pago
+
+Busca esta sección:
+```http
+### 5.2 - Finalizar compra
+# @name checkout
+POST {{baseUrl}}/carrito/finalizar
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "direccion": "Av. Corrientes 1234, CABA",
+  "tarjeta": "4111111111111111"
+}
+```
+
+**Instrucciones:**
+1. Reemplaza `"direccion"` con una dirección válida:
+   - Ejemplo: `"Calle Falsa 123, Capital Federal, Argentina"`
+   - Ejemplo: `"Avenida Libertador 950, Buenos Aires"`
+
+2. Reemplaza `"tarjeta"` con un número de tarjeta (puede ser cualquier número, es un test):
+   - Tarjeta válida de prueba: `"4111111111111111"`
+   - Otra tarjeta de prueba: `"5555555555554444"`
+
+3. Haz clic en **"Send Request"** o presiona `Ctrl+Alt+R`
+
+**Respuesta esperada:**
+```json
+{
+  "compra_id": 1,
+  "usuario_id": 1,
+  "estado": "completada",
+  "fecha": "2026-03-02T15:30:45.123456",
+  "direccion": "Av. Corrientes 1234, CABA",
+  "total": 25000,
+  "items": [
+    {
+      "producto_id": 5,
+      "titulo": "Tablet Samsung",
+      "cantidad": 1,
+      "precio": 25000,
+      "subtotal": 25000
+    }
+  ]
+}
+```
+
+✅ ¡La compra fue completada exitosamente!
+
+**Nota:** Verás el `compra_id` que necesitarás para el siguiente flujo.
+
+---
+
+#### 5.3 - Guardar el ID de la compra para verificar
+
+El archivo `api-tests.http` guarda automáticamente el ID en:
+```http
+@compra_id = {{checkout.response.body.compra_id}}
+```
+
+Este ID se usa en las siguientes peticiones para verificar la compra.
+
+---
+
+### ✅ Tabla Resumida Flujos 3-5
+
+| Paso | Petición | Sección | Resultado Esperado |
+|------|----------|---------|-------------------|
+| **Flujo 3.1** | Agregar producto 1 | 4.2 | Item agregado al carrito |
+| **Flujo 3.2** | Agregar producto 2 | 4.3 | Segundo item agregado |
+| **Flujo 4.1** | Ver carrito | 4.1 | Lista de items + total |
+| **Flujo 4.2** | Eliminar producto | 4.4 | Producto eliminado |
+| **Flujo 4.3** | Verificar carrito | 4.1 | Carrito actualizado sin el producto |
+| **Flujo 5** | Finalizar compra | 5.2 | Compra completada + compra_id |
+
+---
+
+### 💡 Consejos para este flujo
+
+1. **Para obtener IDs de productos válidos**:
+   - Primero ejecuta la petición 2.1 (Listar productos) de la sección anterior
+   - Los IDs válidos son: 1, 2, 3, 4, 5, 6, etc. (según los productos disponibles)
+   - No uses IDs que no existan (ej: 999)
+
+2. **Si obtienes error 401 (No autorizado)**:
+   - Verifica que el token está guardado
+   - Ejecuta nuevamente el login (petición 3.2) para obtener un token fresco
+   - Espera 5 segundos antes de intentar de nuevo
+
+3. **Si obtienes error 404 (Producto no encontrado)**:
+   - El ID del producto no existe
+   - Busca de nuevo los productos disponibles (petición 2.1)
+   - Usa un ID que viste en la respuesta
+
+4. **Si obtienes error 422**:
+   - Verifica que el JSON está bien formado
+   - Asegúrate de que `producto_id` y `cantidad` sean números (sin comillas)
+   - Verifica que la dirección y tarjeta estén entre comillas
+
+5. **Para probar con múltiples productos**:
+   - Agrega 3-4 productos diferentes antes de hacer checkout
+   - Reemplaza los IDs en cada petición (4.2 y 4.3)
+
+6. **Para probar eliminación de productos**:
+   - Agrega al menos 2 productos (pasos 3.1 y 3.2)
+   - Luego elimina uno (paso 4.2) y verifica (paso 4.3)
+   - Finalmente finaliza la compra (paso 5.2)
+
+---
+
+### 📋 Flujo Completo de Principio a Fin
+
+Si quieres probar TODO de una vez, sigue este orden:
+
+1. **Paso anterior**: Registrar usuario (3.1) + Login (3.2) ← Fuera de este flujo
+2. **Paso 3.1**: Agregar producto 1 al carrito
+3. **Paso 3.2**: Agregar producto 2 al carrito
+4. **Paso 4.1**: Ver carrito (debería mostrar 2 items)
+5. **Paso 4.2**: Eliminar producto 1 (opcional)
+6. **Paso 4.3**: Verificar carrito (debería mostrar 1 item)
+7. **Paso 5.2**: Finalizar compra
+
+**Tiempo total:** ~2 minutos para completar el flujo completo.
