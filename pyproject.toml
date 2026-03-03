@@ -22,6 +22,4 @@ dependencies = [
 ]
 
 [tool.uv.workspace]
-members = [
-    "enunciados/tp5",
-]
+members = []

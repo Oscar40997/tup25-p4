@@ -3,8 +3,8 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from typing import Optional
 
-# Configuración de cifrado
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Configuración de cifrado - Usar pbkdf2_sha256 en lugar de bcrypt para evitar problemas en Windows
+pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 
 # Configuración JWT
 SECRET_KEY = "tu-clave-secreta-muy-segura-cambiar-en-produccion"
@@ -13,8 +13,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30 * 24  # 30 días
 
 
 def hash_password(password: str) -> str:
-    """Hashea una contraseña"""
-    return pwd_context.hash(password)
+    """Hashea una contraseña con pbkdf2_sha256"""
+    return pwd_context.hash(password, scheme="pbkdf2_sha256")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
