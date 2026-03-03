@@ -14,7 +14,6 @@ interface ProductoCardProps {
 
 export default function ProductoCard({ producto }: ProductoCardProps) {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-  const [cantidad, setCantidad] = useState(1);
   const [cargando, setCargando] = useState(false);
   const { refrescar } = useCarrito();
   const { token, usuario } = useAuth();
@@ -31,7 +30,7 @@ export default function ProductoCard({ producto }: ProductoCardProps) {
       await agregarAlCarrito(
         {
           producto_id: producto.id,
-          cantidad: cantidad,
+          cantidad: 1,
           titulo: producto.titulo,
           precio: producto.precio,
           imagen: producto.imagen,
@@ -39,8 +38,7 @@ export default function ProductoCard({ producto }: ProductoCardProps) {
         token
       );
       refrescar(token);
-      setCantidad(1);
-      alert(`${cantidad} unidad(es) de ${producto.titulo} agregada al carrito`);
+      alert(`${producto.titulo} agregado al carrito`);
     } catch (error) {
       console.error('Error al agregar al carrito:', error);
       alert('Error al agregar al carrito');
@@ -49,90 +47,57 @@ export default function ProductoCard({ producto }: ProductoCardProps) {
     }
   };
 
+  const stock = (producto as any).stock || 0;
+
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       {/* Imagen del producto */}
-      <div className="relative h-64 bg-gray-100">
+      <div className="relative h-56 bg-gray-100 flex items-center justify-center">
         <Image
           src={`${API_URL}/imagenes/${producto.id.toString().padStart(4, '0')}.png`}
           alt={producto.titulo}
           width={200}
-          height={150}
-          className="object-contain p-4 w-full h-full"
+          height={200}
+          className="object-contain p-4 max-h-full"
           unoptimized
         />
       </div>
 
       {/* Información del producto */}
-      <div className="p-4 flex-1 flex flex-col">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2">
+      <div className="p-4">
+        <h3 className="font-semibold text-gray-800 mb-2 text-sm line-clamp-2">
           {producto.titulo}
         </h3>
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2 flex-1">
+        <p className="text-xs text-gray-600 mb-3 line-clamp-2">
           {producto.descripcion}
         </p>
 
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-            {producto.categoria}
-          </span>
-          <div className="flex items-center gap-1">
-            <span className="text-yellow-500">★</span>
-            <span className="text-sm text-gray-700">{producto.valoracion}</span>
-          </div>
-        </div>
-
         <div className="flex justify-between items-center mb-4">
-          <span className="text-2xl font-bold text-blue-600">
+          <span className="text-lg font-bold text-gray-900">
             ${producto.precio.toFixed(2)}
           </span>
-          <span className="text-xs text-gray-500">
-            Stock: {producto.existencia}
+          <span className="text-xs text-gray-600">
+            Disponible: {stock}
           </span>
         </div>
 
-        {producto.existencia === 0 ? (
-          <span className="text-red-500 text-sm mt-2 block text-center">
-            Agotado
-          </span>
-        ) : (
-          <div className="flex gap-2">
-            <div className="flex-1 flex items-center gap-2">
-              <button
-                onClick={() => setCantidad(Math.max(1, cantidad - 1))}
-                className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                disabled={cargando}
-              >
-                -
-              </button>
-              <input
-                type="number"
-                min="1"
-                max={producto.existencia}
-                value={cantidad}
-                onChange={(e) =>
-                  setCantidad(Math.min(producto.existencia, Math.max(1, parseInt(e.target.value) || 1)))
-                }
-                className="w-12 text-center border rounded"
-                disabled={cargando}
-              />
-              <button
-                onClick={() => setCantidad(Math.min(producto.existencia, cantidad + 1))}
-                className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                disabled={cargando}
-              >
-                +
-              </button>
-            </div>
-            <button
-              onClick={handleAgregarAlCarrito}
-              disabled={cargando || producto.existencia === 0}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {cargando ? 'Agregando...' : 'Agregar'}
-            </button>
-          </div>
-        )}
+        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded inline-block mb-4">
+          {(producto as any).categoria || 'Sin categoría'}
+        </span>
+
+        <button
+          onClick={handleAgregarAlCarrito}
+          disabled={cargando || stock === 0}
+          className={`w-full py-2 px-4 rounded font-medium text-sm transition-colors ${
+            stock === 0
+              ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+              : cargando
+              ? 'bg-gray-500 text-white'
+              : 'bg-black text-white hover:bg-gray-800'
+          }`}
+        >
+          {cargando ? 'Agregando...' : stock === 0 ? 'Sin stock' : 'Agregar al carrito'}
+        </button>
       </div>
     </div>
   );
