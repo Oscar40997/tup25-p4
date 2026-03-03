@@ -2,6 +2,89 @@
 
 Desarrollo de un sitio de comercio electrónico simple utilizando React (Next.js) para el frontend y FastAPI para el backend.
 
+## 📋 Reglas de Uso
+
+El sistema implementa las siguientes restricciones para garantizar la integridad de los datos:
+
+### 1️⃣ Stock y Disponibilidad
+
+**Regla:** Solo se puede agregar productos al carrito si hay existencia disponible.
+
+- **¿Qué significa?** Cada producto tiene un stock (cantidad disponible). No puedes agregar a tu carrito más unidades de las que existen en inventario.
+
+- **Ejemplo:**
+  - Producto: "Laptop HP" con stock = 5
+  - ✅ Puedes agregar 1, 2, 3, 4 o 5 unidades
+  - ❌ NO puedes agregar 6 o más
+
+- **¿Qué pasa si lo intentas?** Recibirás un error 422 (Unprocessable Entity):
+  ```json
+  {
+    "detail": "No hay cantidad suficiente en stock"
+  }
+  ```
+
+- **Cómo probarlo:**
+  - En la petición 4.5 de `api-tests.http` encontrarás un test que intenta agregar más productos de los disponibles
+  - Debería fallar con un mensaje de error
+
+---
+
+### 2️⃣ Autenticación Requerida
+
+**Regla:** El usuario debe estar autenticado para realizar compras y ver su historial.
+
+- **¿Qué significa?** Solo usuarios registrados e identificados pueden:
+  - ✅ Agregar productos al carrito
+  - ✅ Ver su carrito
+  - ✅ Finalizar una compra
+  - ✅ Ver su historial de compras
+
+- **Sin autenticación NO puedes:**
+  - ❌ Acceder al carrito
+  - ❌ Realizar compras
+  - ❌ Ver historial de compras
+
+- **¿Cómo se valida?** Mediante un **JWT Token**:
+  - Cuando haces login, recibes un token
+  - Debes incluir este token en el header de cada petición que requiera autenticación:
+    ```http
+    Authorization: Bearer {tu_token_aqui}
+    ```
+
+- **¿Qué pasa si no incluyes el token?** Recibirás un error 401 (Unauthorized):
+  ```json
+  {
+    "detail": "Not authenticated"
+  }
+  ```
+
+- **¿Qué pasa si el token es inválido?** También recibirás 401:
+  ```json
+  {
+    "detail": "Invalid token"
+  }
+  ```
+
+- **Cómo probarlo:**
+  - En la sección 7 de `api-tests.http` encontrarás "CASOS DE ERROR"
+  - Las peticiones 7.1, 7.2, 7.3 intentan acceder sin autenticación
+  - Deberían fallar con error 401
+
+---
+
+## ✅ Resumen de Restricciones
+
+| Restricción | Condición | Consecuencia | Error |
+|---|---|---|---|
+| **Stock insuficiente** | Intentar agregar más productos que el stock disponible | Petición rechazada | 422 "No hay cantidad suficiente en stock" |
+| **Sin autenticación** | Acceder a carrito/compras/historial sin token | Acceso denegado | 401 "Not authenticated" |
+| **Token inválido** | Token expirado o malformado | Acceso denegado | 401 "Invalid token" |
+| **Usuario inexistente** | Registrarse con email que ya existe | Registro rechazado | 400 "Email already registered" |
+| **Producto inexistente** | Agregar un producto_id que no existe | Agregación rechazada | 404 "Product not found" |
+
+---
+
 ## Requisitos Previos
 
 ### Windows
@@ -982,3 +1065,209 @@ Para probar así TODO desde cero hasta ver el historial:
 8. **Ver detalle de compra** (6.2) - Detalles completos
 
 **Tiempo total:** ~3-4 minutos para todo incluyendo historial.
+
+---
+
+## 🔒 Validación de Restricciones en el Testing
+
+Esta sección explica cómo verificar que las reglas de uso se están cumpliendo correctamente en el sistema.
+
+### Validación 1: Verificar que el stock se respeta
+
+**Objetivo:** Confirmar que NO puedes agregar más productos de los disponibles.
+
+#### Paso 1: Ver el stock disponible
+
+1. Ejecuta la petición **2.1** (Listar todos los productos)
+2. Identifica un producto con stock bajo, por ejemplo:
+   ```json
+   {
+     "id": 7,
+     "titulo": "Mouse Inalámbrico",
+     "stock": 3,
+     "precio": 2500
+   }
+   ```
+   En este ejemplo, solo hay 3 unidades disponibles.
+
+#### Paso 2: Intentar agregar más que el stock
+
+1. En la petición **4.2** (Agregar producto al carrito), usa el producto que identificaste:
+   ```http
+   POST {{baseUrl}}/carrito
+   Content-Type: {{contentType}}
+   Authorization: Bearer {{token}}
+
+   {
+     "producto_id": 7,
+     "cantidad": 5
+   }
+   ```
+   (Intentamos agregar 5, pero solo hay 3 disponibles)
+
+2. Haz clic en **"Send Request"**
+
+#### Paso 3: Verificar que falla
+
+**Respuesta esperada (Error 422):**
+```json
+{
+  "detail": "No hay cantidad suficiente en stock"
+}
+```
+
+✅ La restricción funciona correctamente.
+
+#### Paso 4: Intentar con cantidad válida
+
+1. Repite la petición **4.2** pero con `"cantidad": 3` (o menos):
+   ```http
+   {
+     "producto_id": 7,
+     "cantidad": 3
+   }
+   ```
+
+2. Haz clic en **"Send Request"**
+
+**Respuesta esperada (200 OK):**
+```json
+{
+  "id": 1,
+  "producto_id": 7,
+  "titulo": "Mouse Inalámbrico",
+  "cantidad": 3,
+  "precio": 2500,
+  "subtotal": 7500
+}
+```
+
+✅ Cuando respetas el stock, se agrega exitosamente.
+
+---
+
+### Validación 2: Verificar que se requiere autenticación
+
+**Objetivo:** Confirmar que NO puedes acceder a funciones protegidas sin un token válido.
+
+#### Paso 1: Intentar ver carrito SIN autenticación
+
+1. Busca la petición en la **Sección 7.1** de `api-tests.http`:
+   ```http
+   ### 7.1 - Intentar acceder al carrito sin autenticación
+   GET {{baseUrl}}/carrito
+   Accept: {{contentType}}
+   ```
+   (Nota: NO tiene `Authorization: Bearer {{token}}`)
+
+2. Haz clic en **"Send Request"**
+
+**Respuesta esperada (Error 401):**
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+
+✅ Acceso denegado sin autenticación.
+
+#### Paso 2: Intentar agregar al carrito SIN autenticación
+
+1. Busca la petición en la **Sección 7.2** de `api-tests.http`:
+   ```http
+   ### 7.2 - Intentar agregar al carrito sin autenticación
+   POST {{baseUrl}}/carrito
+   Content-Type: {{contentType}}
+   
+   {
+     "producto_id": 1,
+     "cantidad": 1
+   }
+   ```
+   (Nota: NO tiene `Authorization: Bearer {{token}}`)
+
+2. Haz clic en **"Send Request"**
+
+**Respuesta esperada (Error 401):**
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+
+✅ No puedes agregar al carrito sin estar autenticado.
+
+#### Paso 3: Intentar ver historial SIN autenticación
+
+1. Busca la petición en la **Sección 7.3** de `api-tests.http`:
+   ```http
+   ### 7.3 - Intentar ver compras sin autenticación
+   GET {{baseUrl}}/compras
+   Accept: {{contentType}}
+   ```
+   (Nota: NO tiene `Authorization: Bearer {{token}}`)
+
+2. Haz clic en **"Send Request"**
+
+**Respuesta esperada (Error 401):**
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+
+✅ No puedes ver el historial sin estar autenticado.
+
+#### Paso 4: Verificar que CON autenticación funciona
+
+1. Ejecuta nuevamente las peticiones de paso 1-3, pero esta vez CON el token:
+   ```http
+   Authorization: Bearer {{token}}
+   ```
+
+2. Todas deberían retornar 200 OK con los datos correspondientes.
+
+✅ Con autenticación válida, todo funciona correctamente.
+
+---
+
+### ✅ Checklist de Validaciones
+
+Usa este checklist para verificar que las restricciones se cumplen correctamente:
+
+| Restricción | Test | Resultado Esperado | Comandos |
+|---|---|---|---|
+| **Stock insuficiente** | Agregar más que el stock | Error 422 | 4.2 con cantidad > stock |
+| **Stock válido** | Agregar cantidad ≤ stock | 200 OK + item | 4.2 con cantidad ≤ stock |
+| **Sin token - Ver carrito** | GET /carrito sin autenticación | Error 401 | 7.1 |
+| **Sin token - Agregar carrito** | POST /carrito sin autenticación | Error 401 | 7.2 |
+| **Sin token - Ver historial** | GET /compras sin autenticación | Error 401 | 7.3 |
+| **Con token - Ver carrito** | GET /carrito + token válido | 200 OK + items | 4.1 |
+| **Con token - Agregar carrito** | POST /carrito + token válido | 200 OK + item | 4.2 |
+| **Con token - Ver historial** | GET /compras + token válido | 200 OK + compras | 6.1 |
+
+---
+
+### 📝 Ejemplo Completo: Validar Todo en 5 Minutos
+
+Sigue estos pasos en orden para verificar todas las restricciones:
+
+1. **Autenticar**
+   - Ejecuta 3.1 (Registrar)
+   - Ejecuta 3.2 (Login) - guarda el token
+
+2. **Validar Stock**
+   - Ejecuta 2.1 (Ver productos) - identifica un producto con bajo stock
+   - Ejecuta 4.2 (Agregar) - intenta con cantidad > stock → debe fallar (422)
+   - Ejecuta 4.2 nuevamente - intenta con cantidad ≤ stock → debe funcionar (200)
+
+3. **Validar Autenticación**
+   - Ejecuta 7.1 (Ver carrito sin token) → debe fallar (401)
+   - Ejecuta 7.2 (Agregar sin token) → debe fallar (401)
+   - Ejecuta 7.3 (Ver historial sin token) → debe fallar (401)
+   - Ejecuta 4.1 (Ver carrito CON token) → debe funcionar (200)
+   - Ejecuta 4.2 (Agregar CON token) → debe funcionar (200)
+   - Ejecuta 6.1 (Ver historial CON token) → debe funcionar (200)
+
+**Tiempo total:** ~5 minutos  
+**Resultado esperado:** Todas las restricciones se cumplen correctamente ✅
