@@ -8,42 +8,53 @@
 │  http://localhost:3000                                          │
 │                                                                  │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │ Navbar                                                   │   │
-│  │ - Links de navegación                                    │   │
-│  │ - Contador de items en carrito                          │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│                                                                  │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │ CarritoProvider (Context API)                           │   │
+│  │ AuthContext + CarritoContext                            │   │
+│  │ - Gestión usuario + token JWT                           │   │
 │  │ - Estado global del carrito                             │   │
-│  │ - Métodos para modificar carrito                        │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │                                                                  │
-│  Páginas:                                                       │
-│  - / (Home) - Catálogo de productos                            │
-│  - /carrito - Página del carrito y checkout                    │
+│  Páginas principales:                                          │
+│  - / - Catálogo de productos (GET /productos)                  │
+│  - /login - Iniciar sesión (POST /auth/login)                  │
+│  - /registro - Crear cuenta (POST /auth/registro)              │
+│  - /carrito - Carrito + checkout (POST /carrito/finalizar)    │
+│  - /compras - Histórico de compras (GET /compras)              │
+│  - /pedidos - Detalle pedidos (GET /compras/{id})             │
 └─────────────────────────────────────────────────────────────────┘
-                              ↕ (HTTP/JSON)
+                              ↕ (HTTP/JSON + JWT)
 ┌─────────────────────────────────────────────────────────────────┐
 │                      BACKEND (FastAPI)                          │
 │  http://localhost:8000                                          │
 │                                                                  │
-│  Endpoints:                                                     │
-│  - GET /productos - Listar productos                           │
-│  - GET /productos/{id} - Producto específico                   │
-│  - GET /carrito - Estado del carrito                          │
-│  - POST /carrito/agregar - Agregar producto                   │
-│  - POST /carrito/eliminar/{id} - Eliminar producto            │
-│  - PUT /carrito/actualizar/{id} - Actualizar cantidad         │
-│  - DELETE /carrito/vaciar - Vaciar carrito                    │
-│  - POST /pedidos/crear - Crear pedido                         │
-│  - GET /imagenes/{id}.png - Servir imágenes                   │
+│  Autenticación:                                                 │
+│  - POST /auth/registro (POST /registrar)                        │
+│  - POST /auth/login (POST /iniciar-sesion)                      │
+│                                                                  │
+│  Productos (sin auth):                                          │
+│  - GET /productos                                              │
+│  - GET /productos/{id}                                         │
+│  - GET /buscar ?q=...&categoria=...                            │
+│                                                                  │
+│  Carrito (con JWT Bearer token):                                │
+│  - POST /carrito/agregar (POST /carrito)                       │
+│  - GET /carrito                                                │
+│  - POST /carrito/eliminar/{id} (DELETE /carrito/{id})         │
+│  - DELETE /carrito/vaciar (POST /carrito/cancelar)            │
+│  - POST /pedidos/crear (POST /carrito/finalizar)              │
+│                                                                  │
+│  Compras (con JWT Bearer token):                                │
+│  - GET /pedidos (GET /compras)                                 │
+│  - GET /pedidos/{id} (GET /compras/{id})                      │
+│  - POST /pedidos/{id}/cancelar                                 │
 │                                                                  │
 │  Datos:                                                         │
-│  - productos.json - Base de datos de productos (JSON)         │
-│  - imagenes/ - Carpeta con imágenes de productos              │
+│  - SQLite ecommerce.db (Usuarios, Productos, Pedidos)         │
+│  - imagenes/ - Archivos PNG de productos                       │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+**Nota:** Los nombres entre paréntesis () muestran los endpoints del enunciado original.
+
 
 ## Flujo de Datos
 
@@ -470,44 +481,96 @@ allow_origins=["https://tudominio.com"]
 ## Endpoints Completos por Categoría
 
 ### 🔐 Autenticación (sin auth requerida)
-| Método | Ruta | Descripción | Body |
-|--------|------|-------------|------|
-| POST | `/auth/registro` | Crear nueva cuenta | `{nombre, email, contraseña}` |
-| POST | `/auth/login` | Obtener JWT token | `{email, contraseña}` |
+| Endpoint Solicitado | Endpoint Implementado | Método | Descripción |
+|---|---|---|---|
+| POST /registrar | POST /auth/registro | POST | Crear nueva cuenta |
+| POST /iniciar-sesion | POST /auth/login | POST | Obtener JWT token |
+| POST /cerrar-sesion | (Context API Frontend) | - | Logout (localStorage cleanup) |
 
-### 🔐 Perfil (requiere JWT token)
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| GET | `/auth/perfil` | Obtener datos usuario | Bearer |
+**Detalles:**
+- **POST /auth/registro** - Body: `{nombre, email, contraseña}`
+  - Response: `{access_token, token_type, usuario: {id, nombre, email, ...}}`
+- **POST /auth/login** - Body: `{email, contraseña}`
+  - Response: `{access_token, token_type, usuario: {id, nombre, email, ...}}`
+- **Logout** - No requiere endpoint (se limpia token en localStorage del cliente)
 
-### 📦 Productos (sin auth)
-| Método | Ruta | Descripción | Parámetros |
-|--------|------|-------------|------------|
-| GET | `/` | Listar todos | - |
-| GET | `/productos` | Listar paginado | page, limit |
-| GET | `/buscar` | Buscar productos | q, categoria |
+### 📦 Productos (sin auth requerida)
+| Endpoint Solicitado | Endpoint Implementado | Método | Parámetros |
+|---|---|---|---|
+| GET /productos | GET /productos | GET | page, limit (paginación opcional) |
+| GET /productos | GET / | GET | Listar todos sin paginación |
+| GET /productos/{id} | GET /productos/{id} | GET | - |
+| GET /productos (búsqueda) | GET /buscar | GET | q (término), categoria |
 
-### 🛒 Carrito (requiere JWT token)
-| Método | Ruta | Descripción | Body |
-|--------|------|-------------|------|
-| GET | `/carrito` | Ver carrito actual | - |
-| POST | `/carrito/agregar` | Agregar producto | `{producto_id, cantidad, ...}` |
-| POST | `/carrito/eliminar/{id}` | Eliminar producto | - |
-| PUT | `/carrito/actualizar/{id}` | Cambiar cantidad | `{cantidad}` |
-| DELETE | `/carrito/vaciar` | Limpiar todo | - |
+**Detalles:**
+- **GET /productos** - Retorna: `[{id, titulo, precio, descripcion, categoria, ...}]`
+- **GET /buscar?q=laptop&categoria=electronica** - Búsqueda con filtros
+- **GET /productos/{id}** - Retorna: `{id, titulo, precio, ...}`
 
-### 📋 Pedidos (requiere JWT token)
-| Método | Ruta | Descripción | Body |
-|--------|------|-------------|------|
-| POST | `/pedidos/crear` | Crear compra | `{cliente_*, items, total}` |
-| GET | `/pedidos` | Ver mis compras | - |
-| GET | `/pedidos/{id}` | Ver detalle compra | - |
-| POST | `/pedidos/{id}/cancelar` | Cancelar compra | - |
+### 🛒 Carrito (requiere JWT token en Authorization header)
+| Endpoint Solicitado | Endpoint Implementado | Método | Body |
+|---|---|---|---|
+| POST /carrito | POST /carrito/agregar | POST | `{producto_id, cantidad, titulo, precio, imagen}` |
+| DELETE /carrito/{product_id} | DELETE /carrito/eliminar/{id} | POST* | - |
+| GET /carrito | GET /carrito | GET | - |
+| POST /carrito/finalizar | POST /pedidos/crear | POST | `{cliente_nombre, cliente_email, cliente_telefono, cliente_direccion, cliente_ciudad, items, total}` |
+| POST /carrito/cancelar | DELETE /carrito/vaciar | DELETE | - |
+
+**Detalles:**
+- **POST /carrito/agregar** - Agrega item al carrito del usuario actual
+- **POST /carrito/eliminar/{id}** - Elimina producto específico (usa POST, no DELETE)
+- **GET /carrito** - Retorna carrito del usuario: `{items: [...], total: number}`
+- **POST /pedidos/crear** - Convierte carrito en pedido permanente
+- **DELETE /carrito/vaciar** - Limpia todo el carrito
+
+*Nota: Usa POST en lugar de DELETE (REST clásico)
+
+### 📋 Compras/Pedidos (requiere JWT token)
+| Endpoint Solicitado | Endpoint Implementado | Método | Descripción |
+|---|---|---|---|
+| GET /compras | GET /pedidos | GET | Ver todos mis pedidos |
+| GET /compras/{id} | GET /pedidos/{id} | GET | Ver detalle de pedido |
+| - | POST /pedidos/{id}/cancelar | POST | Cancelar pedido (si está pendiente) |
+
+**Detalles:**
+- **GET /pedidos** - Retorna: `[{id, fecha, total, estado, items, cliente_*}]` (ordenado por fecha DESC)
+- **GET /pedidos/{id}** - Retorna: `{id, fecha, total, estado, items, cliente_*, usuario_id}`
+- **POST /pedidos/{id}/cancelar** - Cambia estado de pedido a "cancelado" (solo si estado="pendiente")
 
 ### 🖼️ Recursos Estáticos (sin auth)
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/imagenes/{id}.png` | Imagen producto |
+| Ruta | Método | Descripción |
+|---|---|---|
+| GET /imagenes/{id}.png | GET | Imagen del producto (0001.png, 0002.png, etc.) |
+
+## Mapeo de Endpoints: Solicitados vs Implementados
+
+Correspondencia exacta entre los endpoints del enunciado y los implementados en el sistema:
+
+| # | Endpoint Solicitado | Endpoint Implementado | Estado | Notas |
+|---|---|---|---|---|
+| 1 | POST /registrar | POST /auth/registro | ✅ | Crear nueva cuenta |
+| 2 | POST /iniciar-sesion | POST /auth/login | ✅ | Obtener JWT token |
+| 3 | POST /cerrar-sesion | localStorage cleanup | ✅ | Logout (Frontend) |
+| 4 | GET /productos | GET /productos | ✅ | Lista con filtros opcionales |
+| 5 | GET /productos/{id} | GET /productos/{id} | ✅ | Detalles producto |
+| 6 | POST /carrito | POST /carrito/agregar | ✅ | Agregar al carrito |
+| 7 | DELETE /carrito/{id} | POST /carrito/eliminar/{id} | ⚠️ | Usa POST en lugar de DELETE |
+| 8 | GET /carrito | GET /carrito | ✅ | Ver contenido carrito |
+| 9 | POST /carrito/finalizar | POST /pedidos/crear | ✅ | Finalizar compra |
+| 10 | POST /carrito/cancelar | DELETE /carrito/vaciar | ✅ | Vaciar carrito |
+| 11 | GET /compras | GET /pedidos | ✅ | Resumen compras (pedidos) |
+| 12 | GET /compras/{id} | GET /pedidos/{id} | ✅ | Detalle compra |
+
+**Leyenda:**
+- ✅ Completamente implementado
+- ⚠️ Funcionalmente equivalente (diferencia menor en método HTTP)
+- ❌ No implementado
+
+**Observaciones:**
+- Todos los endpoints solicitados están implementados o tienen equivalentes funcionales
+- Los nombres de endpoints implementados son más descriptivos (`/auth/`, `/pedidos/` en lugar de `/registrar`, `/compras/`)
+- Endpoints de carrito requieren autenticación JWT
+- El logout no requiere endpoint (se limpia token en localStorage del cliente)
 
 ## Estructura de Carpetas Detallada
 
@@ -926,3 +989,294 @@ Si necesitas modificar/debuggear alguna característica, aquí está ubicada:
 **Última actualización:** 28 de Febrero 2026  
 **Versión del Sistema:** 0.3.0 (Con Autenticación JWT + BD SQLite)  
 **Estado:** Funcional para Testing
+
+## Ejemplos de Uso de Endpoints
+
+### 1️⃣ Registrar Usuario (POST /auth/registro)
+
+**Request:**
+```bash
+curl -X POST http://localhost:8000/auth/registro \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nombre": "Juan Pérez",
+    "email": "juan@example.com",
+    "contraseña": "password123"
+  }'
+```
+
+**Response (201):**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "usuario": {
+    "id": 1,
+    "nombre": "Juan Pérez",
+    "email": "juan@example.com",
+    "ciudad": "",
+    "direccion": "",
+    "telefono": "",
+    "fecha_registro": "2026-02-28T10:30:00"
+  }
+}
+```
+
+### 2️⃣ Iniciar Sesión (POST /auth/login)
+
+**Request:**
+```bash
+curl -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "juan@example.com",
+    "contraseña": "password123"
+  }'
+```
+
+**Response (200):**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "usuario": {
+    "id": 1,
+    "nombre": "Juan Pérez",
+    "email": "juan@example.com",
+    "ciudad": "",
+    "direccion": "",
+    "telefono": "",
+    "fecha_registro": "2026-02-28T10:30:00"
+  }
+}
+```
+
+### 3️⃣ Cerrar Sesión (POST /cerrar-sesion)
+
+**Frontend (JavaScript):**
+```typescript
+// No requiere llamada HTTP, solo limpiar localStorage
+localStorage.removeItem('token');
+localStorage.removeItem('usuario');
+// Redireccionar a /login
+```
+
+### 4️⃣ Obtener Productos (GET /productos)
+
+**Request:**
+```bash
+curl http://localhost:8000/productos
+```
+
+**Response (200):**
+```json
+[
+  {
+    "id": 1,
+    "titulo": "Laptop Dell XPS 13",
+    "precio": 1299.99,
+    "descripcion": "Laptop ultradelgada de última generación",
+    "categoria": "Electrónica",
+    "valoracion": 4.8,
+    "existencia": 5,
+    "imagen": "imagenes/0001.png"
+  },
+  {
+    "id": 2,
+    "titulo": "Mouse Logitech MX Master",
+    "precio": 99.99,
+    "descripcion": "Mouse inalámbrico ergonómico",
+    "categoria": "Electrónica",
+    "valoracion": 4.7,
+    "existencia": 20,
+    "imagen": "imagenes/0002.png"
+  }
+]
+```
+
+### 5️⃣ Obtener Producto Específico (GET /productos/{id})
+
+**Request:**
+```bash
+curl http://localhost:8000/productos/1
+```
+
+**Response (200):**
+```json
+{
+  "id": 1,
+  "titulo": "Laptop Dell XPS 13",
+  "precio": 1299.99,
+  "descripcion": "Laptop ultradelgada de última generación",
+  "categoria": "Electrónica",
+  "valoracion": 4.8,
+  "existencia": 5,
+  "imagen": "imagenes/0001.png"
+}
+```
+
+### 6️⃣ Agregar al Carrito (POST /carrito/agregar)
+
+**Request:**
+```bash
+curl -X POST http://localhost:8000/carrito/agregar \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -d '{
+    "producto_id": 1,
+    "cantidad": 2,
+    "titulo": "Laptop Dell XPS 13",
+    "precio": 1299.99,
+    "imagen": "imagenes/0001.png"
+  }'
+```
+
+**Response (200):**
+```json
+{
+  "mensaje": "Producto agregado al carrito",
+  "carrito": {
+    "items": [
+      {
+        "producto_id": 1,
+        "cantidad": 2,
+        "titulo": "Laptop Dell XPS 13",
+        "precio": 1299.99,
+        "imagen": "imagenes/0001.png"
+      }
+    ],
+    "total": 2599.98
+  }
+}
+```
+
+### 7️⃣ Ver Carrito (GET /carrito)
+
+**Request:**
+```bash
+curl http://localhost:8000/carrito \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+**Response (200):**
+```json
+{
+  "items": [
+    {
+      "producto_id": 1,
+      "cantidad": 2,
+      "titulo": "Laptop Dell XPS 13",
+      "precio": 1299.99,
+      "imagen": "imagenes/0001.png"
+    }
+  ],
+  "total": 2599.98
+}
+```
+
+### 8️⃣ Finalizar Compra (POST /pedidos/crear)
+
+**Request:**
+```bash
+curl -X POST http://localhost:8000/pedidos/crear \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -d '{
+    "cliente_nombre": "Juan Pérez",
+    "cliente_email": "juan@example.com",
+    "cliente_telefono": "+56912345678",
+    "cliente_direccion": "Calle Principal 123",
+    "cliente_ciudad": "Santiago",
+    "items": [
+      {
+        "producto_id": 1,
+        "cantidad": 2,
+        "titulo": "Laptop Dell XPS 13",
+        "precio": 1299.99,
+        "imagen": "imagenes/0001.png"
+      }
+    ],
+    "total": 2599.98
+  }'
+```
+
+**Response (201):**
+```json
+{
+  "mensaje": "Pedido creado exitosamente",
+  "pedido_id": 5,
+  "total": 2599.98,
+  "usuario_id": 1,
+  "estado": "pendiente"
+}
+```
+
+### 9️⃣ Ver Compras del Usuario (GET /pedidos)
+
+**Request:**
+```bash
+curl http://localhost:8000/pedidos \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+**Response (200):**
+```json
+[
+  {
+    "id": 5,
+    "usuario_id": 1,
+    "cliente_nombre": "Juan Pérez",
+    "cliente_email": "juan@example.com",
+    "cliente_telefono": "+56912345678",
+    "cliente_direccion": "Calle Principal 123",
+    "cliente_ciudad": "Santiago",
+    "total": 2599.98,
+    "estado": "pendiente",
+    "fecha": "2026-02-28T14:22:00",
+    "items": [
+      {
+        "id": 1,
+        "pedido_id": 5,
+        "producto_id": 1,
+        "cantidad": 2,
+        "precio_unitario": 1299.99,
+        "titulo": "Laptop Dell XPS 13"
+      }
+    ]
+  }
+]
+```
+
+### 🔟 Ver Detalle de Compra (GET /pedidos/{id})
+
+**Request:**
+```bash
+curl http://localhost:8000/pedidos/5 \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+**Response (200):**
+```json
+{
+  "id": 5,
+  "usuario_id": 1,
+  "cliente_nombre": "Juan Pérez",
+  "cliente_email": "juan@example.com",
+  "cliente_telefono": "+56912345678",
+  "cliente_direccion": "Calle Principal 123",
+  "cliente_ciudad": "Santiago",
+  "total": 2599.98,
+  "estado": "pendiente",
+  "fecha": "2026-02-28T14:22:00",
+  "items": [
+    {
+      "id": 1,
+      "pedido_id": 5,
+      "producto_id": 1,
+      "cantidad": 2,
+      "precio_unitario": 1299.99,
+      "titulo": "Laptop Dell XPS 13"
+    }
+  ]
+}
+```
