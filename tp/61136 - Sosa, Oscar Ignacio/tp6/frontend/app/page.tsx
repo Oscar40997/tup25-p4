@@ -107,7 +107,7 @@ export default function Home() {
                 <p className="text-gray-500">Cargando productos...</p>
               </div>
             ) : filtrados.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-4 w-full">
                 {filtrados.map((producto) => (
                   <ProductoCard key={producto.id} producto={producto} />
                 ))}
