@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCarrito } from '../context/CarritoContext';
 import { useAuth } from '../context/AuthContext';
@@ -9,16 +9,30 @@ import Link from 'next/link';
 export default function Checkout() {
   const router = useRouter();
   const { carrito } = useCarrito();
-  const { usuario } = useAuth();
+  const { usuario, token } = useAuth();
+  const [cargando, setCargando] = useState(false);
   const [formulario, setFormulario] = useState({
-    cliente_nombre: usuario?.nombre || '',
-    cliente_email: usuario?.email || '',
-    direccion: usuario?.direccion || '',
-    ciudad: usuario?.ciudad || '',
-    telefono: usuario?.telefono || '',
+    cliente_nombre: '',
+    cliente_email: '',
+    direccion: '',
+    ciudad: '',
+    telefono: '',
     metodo_pago: 'tarjeta'
   });
-  const [cargando, setCargando] = useState(false);
+
+  // Inicializar formulario cuando el usuario carga
+  useEffect(() => {
+    if (usuario) {
+      setFormulario({
+        cliente_nombre: usuario.nombre || '',
+        cliente_email: usuario.email || '',
+        direccion: '',
+        ciudad: '',
+        telefono: '',
+        metodo_pago: 'tarjeta'
+      });
+    }
+  }, [usuario]);
 
   if (!usuario) {
     return (
@@ -55,6 +69,11 @@ export default function Checkout() {
       return;
     }
 
+    if (!token) {
+      alert('Debes estar autenticado');
+      return;
+    }
+
     setCargando(true);
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -62,12 +81,12 @@ export default function Checkout() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           ...formulario,
           items: carrito.items.map(item => ({
-            producto_id: item.id,
+            producto_id: item.producto_id,
             cantidad: item.cantidad,
             precio_unitario: item.precio
           }))
@@ -75,15 +94,16 @@ export default function Checkout() {
       });
 
       if (!response.ok) {
-        throw new Error('Error al procesar compra');
+        const error = await response.text();
+        throw new Error(`Error al procesar compra: ${error}`);
       }
 
-      const resultado = await response.json();
+      await response.json();
       alert('¡Compra realizada exitosamente!');
       router.push(`/pedidos`);
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al procesar compra');
+      alert(`Error al procesar compra: ${error instanceof Error ? error.message : 'Desconocido'}`);
     } finally {
       setCargando(false);
     }
@@ -207,7 +227,7 @@ export default function Checkout() {
 
             <div className="space-y-2 mb-4">
               {carrito.items.map(item => (
-                <div key={item.id} className="flex justify-between text-sm text-gray-600">
+                <div key={item.producto_id} className="flex justify-between text-sm text-gray-600">
                   <span>{item.titulo} x{item.cantidad}</span>
                   <span>${(item.precio * item.cantidad).toFixed(2)}</span>
                 </div>
