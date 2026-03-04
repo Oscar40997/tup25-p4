@@ -50,58 +50,58 @@ export default function ProductoCard({ producto }: ProductoCardProps) {
   const stock = (producto as any).stock || 0;
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex">
+    <div className="producto-card">
       {/* Imagen del producto - Izquierda */}
-      <div className="relative w-40 h-40 bg-gray-100 flex-shrink-0 flex items-center justify-center border-r">
+      <div className="producto-imagen">
         <Image
           src={`${API_URL}/imagenes/${producto.id.toString().padStart(4, '0')}.png`}
           alt={producto.titulo}
-          width={150}
-          height={150}
-          className="object-contain p-4 max-h-full"
+          width={130}
+          height={130}
+          className="object-contain"
           unoptimized
+          onError={(e) => {
+            const img = e.target as HTMLImageElement;
+            img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="130" height="130"%3E%3Crect fill="%23f3f4f6" width="130" height="130"/%3E%3C/svg%3E';
+          }}
         />
       </div>
 
-      {/* Información del producto - Derecha */}
-      <div className="flex-1 p-4 flex flex-col justify-between">
+      {/* Información del producto - Centro */}
+      <div className="producto-info">
         <div>
-          <h3 className="font-semibold text-gray-800 mb-1 text-base line-clamp-2">
-            {producto.titulo}
-          </h3>
-          <p className="text-xs text-gray-600 mb-2 line-clamp-2">
-            {producto.descripcion}
-          </p>
-
-          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded inline-block mb-3">
+          <h3 className="producto-titulo">{producto.titulo}</h3>
+          <p className="producto-descripcion">{producto.descripcion}</p>
+          <div className="producto-categoria">
             Categoría: {(producto as any).categoria || 'Sin categoría'}
-          </span>
-        </div>
-
-        <div>
-          <div className="flex justify-between items-center mb-3">
-            <span className="text-lg font-bold text-gray-900">
-              ${producto.precio.toFixed(2)}
-            </span>
-            <span className="text-xs text-gray-600">
-              Disponible: {stock}
-            </span>
           </div>
-
-          <button
-            onClick={handleAgregarAlCarrito}
-            disabled={cargando || stock === 0}
-            className={`w-full py-2 px-4 rounded font-medium text-sm transition-colors ${
-              stock === 0
-                ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                : cargando
-                ? 'bg-gray-500 text-white'
-                : 'bg-black text-white hover:bg-gray-800'
-            }`}
-          >
-            {cargando ? 'Agregando...' : stock === 0 ? 'Sin stock' : 'Agregar al carrito'}
-          </button>
         </div>
+        
+        <div>
+          <div className="producto-disponible">
+            Disponible: {stock > 0 ? stock : 'Sin stock'}
+          </div>
+        </div>
+      </div>
+
+      {/* Precio y botón - Derecha */}
+      <div className="producto-derecha">
+        <div className="producto-precio-grande">
+          ${producto.precio.toFixed(2)}
+        </div>
+
+        <button
+          onClick={handleAgregarAlCarrito}
+          disabled={cargando || stock === 0}
+          className={`btn-agregar ${
+            stock === 0 ? 'opacity-60 cursor-not-allowed' : ''
+          }`}
+          style={{
+            backgroundColor: stock === 0 ? '#9ca3af' : (cargando ? '#6b7280' : '#1a3a52'),
+          }}
+        >
+          {cargando ? 'Agregando...' : stock === 0 ? 'Sin stock' : 'Agregar al carrito'}
+        </button>
       </div>
     </div>
   );

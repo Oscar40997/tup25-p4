@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./styles.css";
 import { CarritoProvider } from "./context/CarritoContext";
 import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";

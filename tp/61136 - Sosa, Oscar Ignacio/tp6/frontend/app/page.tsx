@@ -64,100 +64,158 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header con navbar mejorado */}
-      <nav className="bg-white shadow-sm sticky top-16 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex gap-4 items-center">
-            {/* Buscador */}
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder="Buscar..."
-                value={busqueda}
-                onChange={(e) => handleBusqueda(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            {/* Selector de categorías */}
-            <select
-              value={categoriaSeleccionada}
-              onChange={(e) => handleCategoria(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-            >
-              <option value="">Todas las categorías</option>
-              {categorias.map(cat => (
-                <option key={cat} value={cat}>
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                </option>
-              ))}
-            </select>
+    <div style={{ minHeight: '100vh', backgroundColor: '#ffffff' }}>
+      {/* Barra de búsqueda y filtros */}
+      <nav style={{ backgroundColor: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', position: 'sticky', top: '4rem', zIndex: 40 }}>
+        <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          {/* Buscador */}
+          <div style={{ flex: 1 }}>
+            <input
+              type="text"
+              placeholder="Buscar..."
+              value={busqueda}
+              onChange={(e) => handleBusqueda(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.75rem 1rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                fontFamily: 'inherit',
+              }}
+            />
           </div>
+
+          {/* Selector de categorías */}
+          <select
+            value={categoriaSeleccionada}
+            onChange={(e) => handleCategoria(e.target.value)}
+            style={{
+              padding: '0.75rem 1rem',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              backgroundColor: '#ffffff',
+              fontSize: '0.875rem',
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+            }}
+          >
+            <option value="">Todas las categorías</option>
+            {categorias.map(cat => (
+              <option key={cat} value={cat}>
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </option>
+            ))}
+          </select>
         </div>
       </nav>
 
       {/* Contenido principal */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex gap-8">
-          {/* Grid de productos */}
-          <div className="flex-1">
-            {cargando ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500">Cargando productos...</p>
-              </div>
-            ) : filtrados.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 w-full">
-                {filtrados.map((producto) => (
-                  <ProductoCard key={producto.id} producto={producto} />
-                ))}
+      <main style={{ maxWidth: '80rem', margin: '0 auto', padding: '2rem 1rem', display: 'flex', gap: '2rem' }}>
+        {/* Grid de productos */}
+        <div style={{ flex: 1 }}>
+          {cargando ? (
+            <div style={{ textAlign: 'center', paddingTop: '3rem', paddingBottom: '3rem' }}>
+              <p style={{ color: '#6b7280' }}>Cargando productos...</p>
+            </div>
+          ) : filtrados.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
+              {filtrados.map((producto) => (
+                <ProductoCard key={producto.id} producto={producto} />
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', paddingTop: '3rem', paddingBottom: '3rem' }}>
+              <p style={{ color: '#6b7280', fontSize: '1.125rem' }}>No se encontraron productos</p>
+            </div>
+          )}
+        </div>
+
+        {/* Sidebar carrito */}
+        <aside style={{ width: '256px', height: 'fit-content', position: 'sticky', top: '8rem' }}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            borderRadius: '8px',
+            padding: '1.5rem',
+            border: '1px solid #e5e7eb',
+          }}>
+            {usuario ? (
+              <div>
+                <h3 style={{ fontWeight: 600, color: '#111827', marginBottom: '1rem' }}>🛒 Mi Carrito</h3>
+                <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '1rem', lineHeight: 1.5 }}>
+                  Ve y edita tu carrito desde aquí
+                </p>
+                <Link
+                  href="/carrito"
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    backgroundColor: '#1a3a52',
+                    color: 'white',
+                    textAlign: 'center',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    fontWeight: 500,
+                    transition: 'all 200ms',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#0f263a')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1a3a52')}
+                >
+                  Ver carrito
+                </Link>
               </div>
             ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No se encontraron productos</p>
+              <div>
+                <h3 style={{ fontWeight: 600, color: '#111827', marginBottom: '1rem' }}>🛒 Mi Carrito</h3>
+                <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '1rem', lineHeight: 1.5 }}>
+                  Inicia sesión para ver y editar tu carrito.
+                </p>
+                <Link
+                  href="/login"
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    backgroundColor: '#1a3a52',
+                    color: 'white',
+                    textAlign: 'center',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    fontWeight: 500,
+                    marginBottom: '0.75rem',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#0f263a')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1a3a52')}
+                >
+                  Ingresar
+                </Link>
+                <Link
+                  href="/registro"
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    backgroundColor: '#16a34a',
+                    color: 'white',
+                    textAlign: 'center',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#15803d')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#16a34a')}
+                >
+                  Crear cuenta
+                </Link>
               </div>
             )}
           </div>
-
-          {/* Sidebar carrito */}
-          <aside className="w-64 h-fit sticky top-32">
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              {usuario ? (
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-4">🛒 Mi Carrito</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Ve y edita tu carrito desde aquí
-                  </p>
-                  <Link
-                    href="/carrito"
-                    className="block w-full bg-blue-600 text-white text-center py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                  >
-                    Ver carrito
-                  </Link>
-                </div>
-              ) : (
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-4">🛒 Mi Carrito</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Inicia sesión para ver y editar tu carrito.
-                  </p>
-                  <Link
-                    href="/login"
-                    className="block w-full bg-blue-600 text-white text-center py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium mb-2"
-                  >
-                    Ingresar
-                  </Link>
-                  <Link
-                    href="/registro"
-                    className="block w-full bg-green-600 text-white text-center py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
-                  >
-                    Crear cuenta
-                  </Link>
-                </div>
-              )}
-            </div>
-          </aside>
-        </div>
+        </aside>
       </main>
     </div>
   );
